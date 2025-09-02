@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Carrito - Tienda Virtual{% endblock %}
+{% block content %}
+<h1 class="mb-3">Tu Carrito</h1>
+{% if cart and cart.items %}
+  <ul class="list-group mb-3">
+    {% for i in cart.items %}
+      <li class="list-group-item d-flex justify-content-between align-items-center cart-item">
+        <div>
+          <div class="fw-bold">{{ i.product_name }}</div>
+          <small class="text-muted">Cantidad: {{ i.quantity }} · Precio: ${{ '%.0f'|format(i.price) }}</small>
+        </div>
+        <div>
+          <form class="d-inline" method="post" action="{{ url_for('add_to_cart', product_id=i.product_id) }}">
+            <input type="hidden" name="quantity" value="1" />
+            <button class="btn btn-sm btn-outline-secondary">+1</button>
+          </form>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+  <div class="text-end">
+    <h4>Total: ${{ '%.0f'|format(cart.total) }}</h4>
+  </div>
+{% else %}
+  <p>Tu carrito está vacío.</p>
+{% endif %}
+{% endblock %}

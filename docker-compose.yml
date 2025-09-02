@@ -1,0 +1,67 @@
+services:
+  database:
+    image: postgres:15
+    container_name: tienda-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tienda_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/10-init.sql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/20-schema.sql
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  api:
+    build: ./api
+    container_name: tienda-api
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@database:5432/tienda_db
+      SECRET_KEY: mi_clave_secreta_api
+    volumes:
+      - ./api:/app/api
+    depends_on:
+      - database
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  webapp:
+    build: ./webapp
+    container_name: tienda-webapp
+    ports:
+      - "5000:5000"
+    environment:
+      API_URL: "http://api:8000/api/v1"
+      FLASK_ENV: production
+      SECRET_KEY: mi_clave_secreta_webapp
+    volumes:
+      - ./webapp:/app
+    depends_on:
+      - api
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  proxy:
+    build: ./proxy
+    container_name: tienda-proxy
+    ports:
+      - "80:80"
+    depends_on:
+      - webapp
+      - api
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
